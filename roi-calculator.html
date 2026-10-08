@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B2B Lead Generation ROI Calculator</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e17;--bg2:#0f1522;--card:#111827;--card2:#151d2e;
+    --border:#1e293b;--border2:#263349;
+    --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+    --accent:#3b82f6;--accent2:#60a5fa;--accent-glow:rgba(59,130,246,.15);
+    --green:#10b981;--green2:#34d399;--green-glow:rgba(16,185,129,.12);
+    --red:#ef4444;--amber:#f59e0b;
+    --radius:12px;--radius-sm:8px;
+  }
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .container{max-width:1280px;margin:0 auto;padding:0 24px}
+
+  .header{padding:48px 0 32px;text-align:center}
+  .header h1{font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+  .header h1 span{color:var(--accent2)}
+  .header p{color:var(--text2);font-size:1.05rem}
+  .live-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--green-glow);border:1px solid rgba(16,185,129,.25);
+    color:var(--green2);font-size:.75rem;font-weight:600;
+    padding:4px 12px;border-radius:999px;margin-bottom:20px;
+  }
+  .live-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .main-grid{display:grid;grid-template-columns:340px 1fr 380px;gap:20px;margin-bottom:20px}
+  @media(max-width:1100px){.main-grid{grid-template-columns:1fr 1fr}.col-results{grid-column:1/-1;order:-1}}
+  @media(max-width:720px){.main-grid{grid-template-columns:1fr}}
+
+  .panel{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:24px;
+  }
+  .panel-title{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:4px}
+  .panel-sub{font-size:.82rem;color:var(--text3);margin-bottom:20px}
+
+  .slider-group{margin-bottom:22px}
+  .slider-group:last-child{margin-bottom:0}
+  .slider-label-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .slider-label{font-size:.82rem;font-weight:600;color:var(--text)}
+  .slider-value{
+    font-size:.82rem;font-weight:700;color:var(--accent2);
+    background:var(--accent-glow);padding:2px 10px;border-radius:6px;
+    border:1px solid rgba(59,130,246,.2);min-width:70px;text-align:center;
+    transition:background .15s;
+  }
+  .slider-value:focus{outline:none;background:rgba(59,130,246,.25);border-color:var(--accent)}
+  .slider-track{position:relative;height:28px;display:flex;align-items:center}
+  .slider-track input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;
+    background:linear-gradient(to right,var(--accent) var(--fill,50%),#1e293b var(--fill,50%));
+    outline:none;cursor:pointer;
+  }
+  .slider-track input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:#fff;border:3px solid var(--accent);
+    box-shadow:0 0 0 4px rgba(59,130,246,.15);cursor:grab;
+    transition:box-shadow .15s;
+  }
+  .slider-track input[type=range]::-webkit-slider-thumb:active{cursor:grabbing;box-shadow:0 0 0 6px rgba(59,130,246,.2)}
+  .slider-track input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:#fff;
+    border:3px solid var(--accent);box-shadow:0 0 0 4px rgba(59,130,246,.15);cursor:grab;
+  }
+  .slider-minmax{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text3);margin-top:2px}
+
+  .advanced-toggle{
+    width:100%;display:flex;align-items:center;justify-content:space-between;
+    background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:12px 16px;color:var(--text2);font-size:.82rem;font-weight:600;
+    cursor:pointer;transition:border-color .15s,color .15s;
+  }
+  .advanced-toggle:hover{border-color:var(--border2);color:var(--text)}
+  .advanced-toggle .arrow{transition:transform .2s;font-size:.75rem}
+  .advanced-toggle.open .arrow{transform:rotate(180deg)}
+  .advanced-body{display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+  .advanced-body.open{display:block}
+
+  .funnel{display:flex;flex-direction:column;gap:0}
+  .funnel-step{
+    display:flex;align-items:center;gap:14px;
+    background:var(--card2);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:14px 18px;
+    position:relative;
+  }
+  .funnel-step.highlight{
+    background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(59,130,246,.04));
+    border-color:rgba(59,130,246,.3);
+  }
+  .funnel-icon{
+    width:36px;height:36px;border-radius:8px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--accent-glow);font-size:1rem;
+  }
+  .funnel-step.highlight .funnel-icon{background:rgba(59,130,246,.2)}
+  .funnel-info{flex:1;min-width:0}
+  .funnel-label{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)}
+  .funnel-value{font-size:1.25rem;font-weight:700;color:var(--text);line-height:1.2}
+  .funnel-rate{font-size:.72rem;color:var(--text3)}
+  .funnel-arrow{text-align:center;padding:4px 0;color:var(--text3);font-size:.8rem}
+
+  .roi-hero{
+    background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(16,185,129,.03));
+    border:1px solid rgba(16,185,129,.2);border-radius:var(--radius);
+    padding:28px 24px;text-align:center;margin-bottom:16px;
+  }
+  .roi-hero .roi-label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--green2);margin-bottom:4px}
+  .roi-hero .roi-value{font-size:clamp(2.8rem,5vw,3.8rem);font-weight:800;color:var(--green);letter-spacing:-.03em;line-height:1}
+  .roi-hero .roi-sub{font-size:.8rem;color:var(--text3);margin-top:6px}
+  .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .result-card{
+    background:var(--card2);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:14px 16px;
+  }
+  .result-card .rc-label{font-size:.68rem;font-weight:600;color:var(--text3);margin-bottom:2px;display:flex;align-items:center;gap:5px}
+  .result-card .rc-value{font-size:1.15rem;font-weight:700;color:var(--text)}
+  .result-card.wide{grid-column:1/-1}
+  .result-card.green .rc-value{color:var(--green2)}
+  .result-card.blue .rc-value{color:var(--accent2)}
+  .result-card.amber .rc-value{color:var(--amber)}
+
+  .compare-grid{display:grid;grid-template-columns:1fr;gap:20px;margin-bottom:20px}
+  .compare-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .compare-box{
+    flex:1;min-width:100px;background:var(--card2);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:14px 16px;text-align:center;
+  }
+  .compare-box .cb-label{font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)}
+  .compare-box .cb-value{font-size:1.3rem;font-weight:700;margin-top:2px}
+  .compare-box.green{border-color:rgba(16,185,129,.25)}
+  .compare-box.green .cb-value{color:var(--green2)}
+  .compare-box.blue{border-color:rgba(59,130,246,.25)}
+  .compare-box.blue .cb-value{color:var(--accent2)}
+  .compare-box.amber{border-color:rgba(245,158,11,.25)}
+  .compare-box.amber .cb-value{color:var(--amber)}
+  .compare-arrow{color:var(--text3);font-size:1rem;flex-shrink:0}
+
+  .cost-breakdown{
+    background:var(--card2);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:16px 18px;margin-top:14px;
+  }
+  .cost-breakdown .cb-title{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+  .cost-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.85rem}
+  .cost-row .cr-label{color:var(--text2)}
+  .cost-row .cr-value{font-weight:700;color:var(--text)}
+  .cost-row.total{border-top:1px solid var(--border);margin-top:6px;padding-top:10px}
+  .cost-row.total .cr-value{color:var(--amber);font-size:1.05rem}
+
+  .cta{
+    text-align:center;padding:48px 24px;margin-top:20px;
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  }
+  .cta h2{font-size:1.5rem;font-weight:700;margin-bottom:6px}
+  .cta p{color:var(--text2);font-size:.92rem;margin-bottom:24px}
+  .cta-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:12px 28px;border-radius:var(--radius-sm);
+    font-size:.9rem;font-weight:600;cursor:pointer;
+    transition:transform .15s,box-shadow .15s;text-decoration:none;border:none;
+  }
+  .btn-primary{
+    background:var(--accent);color:#fff;
+    box-shadow:0 4px 16px rgba(59,130,246,.3);
+  }
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,.4)}
+  .btn-secondary{
+    background:var(--card2);color:var(--text);border:1px solid var(--border2);
+  }
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent2)}
+
+  .disclaimer{
+    text-align:center;font-size:.72rem;color:var(--text3);
+    padding:20px 0 40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="live-badge"><span class="dot"></span>Real-Time Calculation</div>
+    <h1>See How Many <span>Qualified Leads</span> You Could Generate</h1>
+    <p>Adjust the sliders below to see your potential results, revenue, and return on investment.</p>
+  </div>
+
+  <div class="main-grid">
+
+    <div class="panel">
+      <div class="panel-title">1. Outbound Assumptions</div>
+      <div class="panel-sub">Adjust the variables below to model your potential campaign.</div>
+      <div id="sliders-main"></div>
+
+      <div style="height:20px"></div>
+
+      <div class="panel-title">2. Your Investment</div>
+      <div class="panel-sub">What you'll pay for the outbound system</div>
+      <div id="sliders-investment"></div>
+
+      <div style="height:20px"></div>
+
+      <button class="advanced-toggle" id="advanced-toggle" onclick="toggleAdvanced()">
+        <span>⚙ Advanced Assumptions</span>
+        <span class="arrow">▼</span>
+      </button>
+      <div class="advanced-body" id="advanced-body">
+        <div id="sliders-advanced"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">🔽 Your Sales Funnel</div>
+      <div class="panel-sub">From outreach to revenue — see how your numbers flow.</div>
+      <div class="funnel" id="funnel"></div>
+
+      <div class="cost-breakdown">
+        <div class="cb-title">💵 Your Outbound System Cost</div>
+        <div class="cost-row"><span class="cr-label">Per meeting booked</span><span class="cr-value" id="cb-per-meeting">—</span></div>
+        <div class="cost-row"><span class="cr-label">Meetings booked</span><span class="cr-value" id="cb-meetings">—</span></div>
+        <div class="cost-row"><span class="cr-label">Startup cost</span><span class="cr-value" id="cb-startup">—</span></div>
+        <div class="cost-row total"><span class="cr-label">Total system cost</span><span class="cr-value" id="cb-total">—</span></div>
+      </div>
+    </div>
+
+    <div class="panel col-results">
+      <div class="panel-title">📊 Your Projected ROI</div>
+      <div class="panel-sub">Based on your current assumptions</div>
+
+      <div class="roi-hero">
+        <div class="roi-label">ROI</div>
+        <div class="roi-value" id="roi-value">—</div>
+        <div class="roi-sub">Projected Return on Investment</div>
+      </div>
+
+      <div class="results-grid">
+        <div class="result-card"><div class="rc-label">👥 Total Contacts</div><div class="rc-value" id="r-contacts">—</div></div>
+        <div class="result-card"><div class="rc-label">✉️ Total Replies</div><div class="rc-value" id="r-replies">—</div></div>
+        <div class="result-card"><div class="rc-label">👤 Qualified Leads</div><div class="rc-value" id="r-qualified">—</div></div>
+        <div class="result-card"><div class="rc-label">📅 Meetings Booked</div><div class="rc-value" id="r-meetings">—</div></div>
+        <div class="result-card"><div class="rc-label">🤝 New Clients</div><div class="rc-value" id="r-clients">—</div></div>
+        <div class="result-card green"><div class="rc-label">💵 Revenue Generated</div><div class="rc-value" id="r-revenue">—</div></div>
+        <div class="result-card amber"><div class="rc-label">💰 Total System Cost</div><div class="rc-value" id="r-investment">—</div></div>
+        <div class="result-card green"><div class="rc-label">📈 Net Profit</div><div class="rc-value" id="r-profit">—</div></div>
+        <div class="result-card blue"><div class="rc-label">🎯 Cost Per Meeting</div><div class="rc-value" id="r-cpm">—</div></div>
+        <div class="result-card blue"><div class="rc-label">🎯 Cost Per Client</div><div class="rc-value" id="r-cpc">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="panel">
+      <div class="panel-title">⚖️ Your Investment vs. Potential Return</div>
+      <div class="panel-sub">See the full picture of your campaign economics.</div>
+      <div class="compare-flow">
+        <div class="compare-box amber"><div class="cb-label">Total System Cost</div><div class="cb-value" id="c-investment">—</div></div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-box blue"><div class="cb-label">Potential Revenue</div><div class="cb-value" id="c-revenue">—</div></div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-box green"><div class="cb-label">Net Profit</div><div class="cb-value" id="c-profit">—</div></div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-box green"><div class="cb-label">ROI</div><div class="cb-value" id="c-roi">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h2>Want to see what this could look like for your business?</h2>
+    <p>Get a personalized estimate based on your market, offer, and sales numbers.</p>
+    <div class="cta-buttons">
+      <a class="btn btn-primary" href="https://calendly.com/tj888truong/scheduled-meeting" target="_blank" rel="noopener">📅 Book a Strategy Call</a>
+    </div>
+  </div>
+
+  <div class="disclaimer">These projections are estimates based on the assumptions entered and are not a guarantee of results.</div>
+
+</div>
+
+<script>
+const state = {
+  contactsPerMonth: 50000,
+  campaignMonths: 3,
+  replyRate: 0.02,
+  positiveResponseRate: 0.08,
+  meetingConversionRate: 0.50,
+  closeRate: 0.20,
+  averageDealValue: 10000,
+  costPerMeeting: 250,
+  startupCost: 1500,
+  meetingShowRate: 0.80,
+  sqlRate: 0.60,
+};
+
+const mainSliders = [
+  { key:'contactsPerMonth', label:'Contacts Reached Per Month', min:1000, max:250000, step:1000, format:v=>fmtNum(v) },
+  { key:'campaignMonths', label:'Campaign Duration', min:1, max:12, step:1, format:v=>v+' month'+(v>1?'s':'') },
+  { key:'replyRate', label:'Reply Rate', min:0.001, max:0.10, step:0.001, format:v=>(v*100).toFixed(1)+'%' },
+  { key:'positiveResponseRate', label:'Positive Response Rate', min:0.01, max:0.30, step:0.01, format:v=>(v*100).toFixed(0)+'%' },
+  { key:'meetingConversionRate', label:'Meeting Conversion Rate', min:0.10, max:0.90, step:0.05, format:v=>(v*100).toFixed(0)+'%' },
+  { key:'closeRate', label:'Meeting Close Rate', min:0.05, max:0.80, step:0.05, format:v=>(v*100).toFixed(0)+'%' },
+  { key:'averageDealValue', label:'Average Deal Value', min:1000, max:100000, step:1000, format:v=>'$'+fmtNum(v) },
+];
+
+const COST_PER_MEETING = 250;
+
+const investmentSliders = [
+  { key:'startupCost', label:'Startup Cost', min:0, max:10000, step:250, format:v=>'$'+fmtNum(v) },
+];
+
+const advancedSliders = [
+  { key:'meetingShowRate', label:'Meeting Show Rate', min:0.30, max:1.00, step:0.05, format:v=>(v*100).toFixed(0)+'%' },
+  { key:'sqlRate', label:'Sales-Qualified Lead Rate', min:0.20, max:1.00, step:0.05, format:v=>(v*100).toFixed(0)+'%' },
+];
+
+function calculate(s) {
+  const totalContacts = s.contactsPerMonth * s.campaignMonths;
+  const replies = totalContacts * s.replyRate;
+  const qualifiedLeads = replies * s.positiveResponseRate;
+  const sqls = qualifiedLeads * s.sqlRate;
+  const meetings = sqls * s.meetingConversionRate * s.meetingShowRate;
+  const clients = meetings * s.closeRate;
+  const revenue = clients * s.averageDealValue;
+  const totalCost = meetings * COST_PER_MEETING + s.startupCost;
+  const netProfit = revenue - totalCost;
+  const roi = totalCost > 0 ? (netProfit / totalCost) * 100 : null;
+  const blendedCostPerMeeting = meetings > 0 ? totalCost / meetings : null;
+  const costPerClient = clients > 0 ? totalCost / clients : null;
+  const baseCost = meetings * s.costPerMeeting;
+
+  return { totalContacts, replies, qualifiedLeads, sqls, meetings, clients, revenue, totalCost, netProfit, roi, blendedCostPerMeeting, costPerClient, baseCost };
+}
+
+function fmtNum(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (!isFinite(n)) return '—';
+  return Math.round(n).toLocaleString('en-US');
+}
+function fmtMoney(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (!isFinite(n)) return '—';
+  const abs = Math.abs(n);
+  const formatted = abs.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  return (n < 0 ? '-$' : '$') + formatted;
+}
+function fmtPct(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (!isFinite(n)) return '—';
+  return n.toLocaleString('en-US', { maximumFractionDigits: 0 }) + '%';
+}
+
+function render() {
+  const r = calculate(state);
+
+  const funnelEl = document.getElementById('funnel');
+  const steps = [
+    { label:'Contacts', value:fmtNum(r.totalContacts), rate:'', icon:'👥', highlight:false },
+    { label:'Replies', value:fmtNum(r.replies), rate:'('+(state.replyRate*100).toFixed(1)+'% reply rate)', icon:'✉️', highlight:false },
+    { label:'Qualified Leads', value:fmtNum(r.qualifiedLeads), rate:'('+(state.positiveResponseRate*100).toFixed(0)+'% positive response)', icon:'👤', highlight:false },
+    { label:'Meetings', value:fmtNum(r.meetings), rate:'('+(state.meetingConversionRate*100).toFixed(0)+'% meeting rate)', icon:'📅', highlight:false },
+    { label:'New Clients', value:fmtNum(r.clients), rate:'('+(state.closeRate*100).toFixed(0)+'% close rate)', icon:'🤝', highlight:false },
+    { label:'Revenue', value:fmtMoney(r.revenue), rate:'(avg. deal value: '+fmtMoney(state.averageDealValue)+')', icon:'💵', highlight:true },
+  ];
+  funnelEl.innerHTML = steps.map((s,i) => {
+    const arrow = i < steps.length - 1 ? '<div class="funnel-arrow">↓</div>' : '';
+    return `<div class="funnel-step${s.highlight?' highlight':''}">
+      <div class="funnel-icon">${s.icon}</div>
+      <div class="funnel-info">
+        <div class="funnel-label">${s.label}</div>
+        <div class="funnel-value">${s.value}</div>
+        ${s.rate?`<div class="funnel-rate">${s.rate}</div>`:''}
+      </div>
+    </div>${arrow}`;
+  }).join('');
+
+  document.getElementById('cb-per-meeting').textContent = fmtMoney(COST_PER_MEETING);
+  document.getElementById('cb-meetings').textContent = fmtNum(r.meetings);
+  document.getElementById('cb-startup').textContent = fmtMoney(state.startupCost);
+  document.getElementById('cb-total').textContent = fmtMoney(r.totalCost);
+
+  document.getElementById('roi-value').textContent = r.roi !== null ? fmtPct(r.roi) : '—';
+  document.getElementById('r-contacts').textContent = fmtNum(r.totalContacts);
+  document.getElementById('r-replies').textContent = fmtNum(r.replies);
+  document.getElementById('r-qualified').textContent = fmtNum(r.qualifiedLeads);
+  document.getElementById('r-meetings').textContent = fmtNum(r.meetings);
+  document.getElementById('r-clients').textContent = fmtNum(r.clients);
+  document.getElementById('r-revenue').textContent = fmtMoney(r.revenue);
+  document.getElementById('r-investment').textContent = fmtMoney(r.totalCost);
+  document.getElementById('r-profit').textContent = fmtMoney(r.netProfit);
+  document.getElementById('r-cpm').textContent = r.blendedCostPerMeeting !== null ? fmtMoney(r.blendedCostPerMeeting) : '—';
+  document.getElementById('r-cpc').textContent = r.costPerClient !== null ? fmtMoney(r.costPerClient) : '—';
+
+  document.getElementById('c-investment').textContent = fmtMoney(r.totalCost);
+  document.getElementById('c-revenue').textContent = fmtMoney(r.revenue);
+  document.getElementById('c-profit').textContent = fmtMoney(r.netProfit);
+  document.getElementById('c-roi').textContent = r.roi !== null ? fmtPct(r.roi) : '—';
+
+  document.querySelectorAll('.slider-track input[type=range]').forEach(input => {
+    const min = parseFloat(input.min), max = parseFloat(input.max), val = parseFloat(input.value);
+    const pct = ((val - min) / (max - min)) * 100;
+    input.style.setProperty('--fill', pct + '%');
+  });
+}
+
+function buildSliders(containerId, defs) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = defs.map((d) => {
+    const val = state[d.key];
+    const pct = ((val - d.min) / (d.max - d.min)) * 100;
+    return `<div class="slider-group">
+      <div class="slider-label-row">
+        <span class="slider-label">${d.label}</span>
+        <input class="slider-value" type="text" inputmode="decimal" value="${d.format(val)}" data-key="${d.key}" onchange="onValueEdit(this)" onkeydown="if(event.key==='Enter')this.blur()">
+      </div>
+      <div class="slider-track">
+        <input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${val}" data-key="${d.key}" style="--fill:${pct}%" oninput="onSliderInput(this)">
+      </div>
+      <div class="slider-minmax">
+        <span>${d.format(d.min)}</span>
+        <span>${d.format(d.max)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function onSliderInput(input) {
+  const key = input.dataset.key;
+  const val = parseFloat(input.value);
+  state[key] = val;
+  const group = input.closest('.slider-group');
+  const textInput = group.querySelector('.slider-value');
+  const def = [...mainSliders, ...investmentSliders, ...advancedSliders].find(d => d.key === key);
+  if (def) textInput.value = def.format(val);
+  render();
+}
+
+function onValueEdit(input) {
+  const key = input.dataset.key;
+  const def = [...mainSliders, ...investmentSliders, ...advancedSliders].find(d => d.key === key);
+  if (!def) return;
+  let raw = input.value.replace(/[^0-9.\-]/g, '');
+  let val = parseFloat(raw);
+  if (isNaN(val)) { input.value = def.format(state[key]); return; }
+  val = Math.max(def.min, Math.min(def.max, val));
+  state[key] = val;
+  const group = input.closest('.slider-group');
+  const range = group.querySelector('input[type=range]');
+  range.value = val;
+  input.value = def.format(val);
+  render();
+}
+
+function toggleAdvanced() {
+  const body = document.getElementById('advanced-body');
+  const toggle = document.getElementById('advanced-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+buildSliders('sliders-main', mainSliders);
+buildSliders('sliders-investment', investmentSliders);
+buildSliders('sliders-advanced', advancedSliders);
+render();
+</script>
+</body>
+</html>
