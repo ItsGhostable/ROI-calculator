@@ -2,6 +2,11 @@
   publish = "."
 
 [[redirects]]
-  from = "/"
-  to = "/roi-calculator.html"
-  status = 200
+  from = "/roi-calculator.html"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/roi-calculator"
+  to = "/"
+  status = 301
