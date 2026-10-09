@@ -1,0 +1,12 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/roi-calculator.html"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/roi-calculator"
+  to = "/"
+  status = 301
